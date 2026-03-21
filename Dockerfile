@@ -7,6 +7,6 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-ENV PORT=5050
+ENV PORT=8080
 
 CMD ["python", "muavin_api.py"]
