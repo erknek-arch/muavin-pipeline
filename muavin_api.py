@@ -139,5 +139,4 @@ if __name__ == "__main__":
     print(f"  /health        GET")
     print(f"  /convert-file  POST  multipart (n8n cloud)")
     print(f"  /convert       POST  JSON       (lokal test)")
-    import os
 app.run(host=HOST, port=int(os.environ.get("PORT", PORT)), debug=False)
