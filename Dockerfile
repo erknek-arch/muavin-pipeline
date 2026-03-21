@@ -7,6 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-ENV PORT=8080
-
-CMD ["python", "muavin_api.py"]
+CMD gunicorn -w 4 -b 0.0.0.0:${PORT:-8080} muavin_api:app
