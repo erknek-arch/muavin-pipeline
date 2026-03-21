@@ -7,6 +7,5 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-EXPOSE 5050
 
 CMD ["python", "muavin_api.py"]
