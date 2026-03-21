@@ -1,0 +1,109 @@
+{
+  "name": "Muavin Defter Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "triggerOn": "specificFolder",
+        "folderToWatch": { "__rl": true, "value": "DRIVE_GIRDI_KLASOR_ID", "mode": "id" },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Drive — Yeni Dosya",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [160, 300],
+      "credentials": { "googleDriveOAuth2Api": { "id": "GOOGLE_CREDENTIAL_ID", "name": "Google Drive" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [{
+            "id": "c1",
+            "leftValue": "={{ $json.name }}",
+            "rightValue": ".xls",
+            "operator": { "type": "string", "operation": "contains" }
+          }]
+        }
+      },
+      "id": "2",
+      "name": "xls/xlsx mi?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [380, 300]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": { "__rl": true, "value": "={{ $json.id }}", "mode": "id" },
+        "options": {}
+      },
+      "id": "3",
+      "name": "Drive — İndir",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [600, 300],
+      "credentials": { "googleDriveOAuth2Api": { "id": "GOOGLE_CREDENTIAL_ID", "name": "Google Drive" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://RENDER_APP_NAME.onrender.com/convert-file",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "parameterType": "formBinaryData", "name": "file", "inputDataFieldName": "data" },
+            { "parameterType": "formData",       "name": "filename", "value": "={{ $('Drive — Yeni Dosya').item.json.name }}" }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
+          },
+          "timeout": 120000
+        }
+      },
+      "id": "4",
+      "name": "Muavin API — Dönüştür",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [820, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $('Drive — Yeni Dosya').item.json.name.replace(/\\.xls[x]?$/i, '') + '_Standart.xlsx' }}",
+        "driveId": { "__rl": true, "mode": "list", "value": "MyDrive" },
+        "folderId": { "__rl": true, "value": "DRIVE_CIKTI_KLASOR_ID", "mode": "id" },
+        "options": { "simplifyOutput": true }
+      },
+      "id": "5",
+      "name": "Drive — Standart Yükle",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1040, 300],
+      "credentials": { "googleDriveOAuth2Api": { "id": "GOOGLE_CREDENTIAL_ID", "name": "Google Drive" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const upload = $input.first().json;\nreturn [{ json: {\n  dosya:    $('Drive — Yeni Dosya').item.json.name,\n  cikti_id: upload.id || '',\n  link:     upload.webViewLink || '',\n  zaman:    new Date().toISOString()\n}}];"
+      },
+      "id": "6",
+      "name": "Sonuç",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1260, 300]
+    }
+  ],
+  "connections": {
+    "Drive — Yeni Dosya":  { "main": [[{ "node": "xls/xlsx mi?",          "type": "main", "index": 0 }]] },
+    "xls/xlsx mi?":        { "main": [[{ "node": "Drive — İndir",          "type": "main", "index": 0 }]] },
+    "Drive — İndir":       { "main": [[{ "node": "Muavin API — Dönüştür",  "type": "main", "index": 0 }]] },
+    "Muavin API — Dönüştür":{ "main": [[{ "node": "Drive — Standart Yükle","type": "main", "index": 0 }]] },
+    "Drive — Standart Yükle":{ "main": [[{ "node": "Sonuç",               "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
