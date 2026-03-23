@@ -66,6 +66,17 @@ def health():
 # Header olarak da özet meta gelir:
 #   X-Muavin-Format, X-Muavin-RowsOut, X-Muavin-Accounts
 # ─────────────────────────────────────────────
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "service":   "muavin-pipeline",
+        "status":    "ok",
+        "endpoints": {
+            "GET  /health":        "Saglik kontrolu",
+            "POST /convert-file":  "n8n cloud — multipart dosya yukle, xlsx al",
+            "POST /convert":       "Lokal test — JSON ile dosya yolu gonder",
+        }
+    }), 200
 @app.route("/convert-file", methods=["POST"])
 def convert_file():
     if "file" not in request.files:
